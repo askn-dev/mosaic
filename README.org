@@ -1,0 +1,177 @@
+#+TITLE: mosiac
+
+*WIP*
+
+* COMMENT Modular Operation Sequences And Interactive Combinators
+
+mosiac is an emacs package that aims to do multiple things.
+
+Main ones are:
+
+1. Declarative specification for complex editor actions which link multiple
+   packages and/or steps. do for editor interactions what use-package does for
+   packages.
+
+   Consider following complex interactions:
+
+   1. consult-buffer, then enter search string, if buffer not found,
+      embark-become keybiding and then find-file keybinding, then navigate to
+      file and then embark-act keybinding, then find-file-other-window
+      keybinding. There were multiple choices instead of find-file
+   2. isearch to search a string, then once a few matches are left, switch to
+      avy-jump to do final selection via a single keypress.
+
+   mosiac macro allows specifying these interactions declaratively and provides
+   some added conveniences like uniform help, integration-glue between packages etc.
+
+2. Have orthogonal grammar and combinators for compatible actions. To take an
+   example:
+   - avy, vertico etc are UIs for selecting
+   - consult-line and avy-goto-line are UIs for populating the selection list
+   - embark-act can be used for consult, and avy has it's own single key dispatch
+
+   mosiac tries to develop a interaction grammar with objects, actions and capabilities.
+   It tries to ensure MxN multiplexing when possible. eg: It should be possible to take
+   an action on line, doesn't matter if it was selected via avy or consult-line. Moreover,
+   the actions and their keymaps should be same.
+   Similarly, We would want to decouple aggregation/collection/listing mechanism with
+   selection mechanism like avy or vertico.
+   If every element in sequence does this, we get multiplicative expressive power.
+
+3. Mosiac is essentially a macro that encapsulates a sequence of operations,
+   which can be run, and various combinators for them. It is also intended to be
+   a building block for workign with LLMs on large projects.
+
+   - One the basis of 2, we can also expose these complex interactions as
+     functions to LLMs via tool use.
+   - Promotes LLM writing elisp code( or lsp like eglot-rename, gofmt -r) etc or programmatic tools which
+     are executed via emacs, rather than llm 
+   - Compose =mosiac= operations into larger workflows, which is how mosaic is used building large projects.
+     Users create a mosiac with the help of llm and then execute it. Recursively. Attach mosiac.org as context 
+     to LLM.
+     For eg: First mosiac is a sequence of 4 steps for writing spec, design, implementation, testing with
+     inputs flowing through. This is mostly templatized, with interactive refinement leading to a spec or design
+     etc.
+     Inside each of these, one might keep breaking into further mosiacs and require various data as context or tool use etc.
+     Let's take an implementation example. Say we want to add an argument to a function in a large codebase whose and the
+     argument's value depends on the call site.
+     It can be done via following sequence
+     - llm writes a new function with added argument
+     - collect all the invocations via xref (exposed via another mosiac), and then
+       act on these, which can be another mosiac to send functions to LLM with
+       context needed for change (in batches or one at a time etc) or human can decide to do the change themselves.
+       Or ask llm to use regexp or some external tool etc.
+   - Mosiac can be composed of mosiacs also.
+   - Mosiac can be stateful, think selection a bunch in consult-ripgrep
+     and doing recursive editing on them one at a time.
+   - Mosiac can be persisted, resumed and branced of from any step.
+   - Even LLM interaction can be a mosiac, so arbitrarily complex projects/tasks and
+     their completion with LLM collaboration can be persisted like git log. This is one
+     of the missing pieces in current llm assisted coding. They do not preserve all the state.
+   - Mosiac was intended to provide a lever between human attention/generation
+     and LLM generation. So, user can arbitrarily refine mosiac and subsistute
+     llm generation with human input for any piece (integrates via recursive
+     editing). All of this will be tracked via mosiac itself.
+     gptel provides way to persist llm settings and state.
+     Mosiac provides combinators to send to llm in batches, all, sequentially, accumulation etc.
+   - Mosiac can track orthogonal aspects like cost for LLMs/failed attempts etc or time for human.
+
+
+
+* Modular Operation Sequences And Interactive Combinators
+
+mosiac is an Emacs package designed to streamline the creation and management of
+complex, multi-step editor interactions in a clear, declarative way. Just as
+=use-package= allows declarative setup for packages, mosiac allows users to
+describe sophisticated workflows involving multiple Emacs tools.
+
+* Key Features
+
+** Declarative Complex Interactions
+
+   Complex workflows can be described clearly using the mosiac macro. For example:
+
+   - You start searching for a buffer (=consult-buffer=), don't find it, quickly
+     switch (=embark-become=) to file navigation, find the file interactively,
+     and then open it in another window.
+   - You're performing an incremental search (=isearch=) and narrow down
+     choices, then seamlessly switch to avy to finalize selections with a single
+     keypress.
+   - To select some region if cursor is already at one end, isearch (or
+     avy-jump), jump to the other end and finally C-x C-x to bring cursor back
+     to original position and activate the region between two points.
+     
+   mosiac makes interactions like these simple to define, manage, and reuse. It also
+   provides some uniformity and other conveniences.
+
+** Compositional & Orthogonal Grammar
+
+   mosiac is built around the principle of clean decoupling and combinators for
+   interactions. By breaking actions down into modular elements (eg: selectors like
+   avy or vertico, sources like consult-line, actions), it
+   allows powerful combinations while ensuring consistent interfaces. For example, a single
+   mosiac can have following and any of their combinations would work with same keybindings.
+
+   - Choose your selection method (avy, vertico).
+   - Choose the data source (consult-line, avy-goto-line).
+   - Perform uniform actions regardless of the choice above.
+
+   With these and interactive combinators, we can also create larger mosaics.
+
+** LLM Integration and Interactive Workflows
+
+   Mosiac is essentially a macro that encapsulates a sequence of operations,
+   which can be run, and various combinators for them. It is also intended to be
+   a building block for workign with LLMs on large projects.
+
+   - One the basis of 2, we can also expose these complex interactions as
+     functions to LLMs via tool use (with human in the loop configurability)
+   - Promotes LLM writing elisp code( or lsp like eglot-rename, gofmt -r) etc or programmatic tools which
+     are executed via emacs, rather than llm 
+   - Compose =mosiac= operations into larger workflows, which is how mosaic is used building large projects.
+     Users create a mosiac with the help of llm and then execute it. Recursively. Attach mosiac.org as context 
+     to LLM.
+     For eg: First mosiac is a sequence of 4 steps for writing spec, design, implementation, testing with
+     inputs flowing through. This is mostly templatized, with interactive refinement leading to a spec or design
+     etc.
+     Inside each of these, one might keep breaking into further mosiacs and require various data as context or tool use etc.
+     Let's take an implementation example. Say we want to add an argument to a function in a large codebase whose and the
+     argument's value depends on the call site.
+     It can be done via following sequence
+     - llm writes a new function with added argument
+     - collect all the invocations via xref (exposed via another mosiac), and then
+       act on these, which can be another mosiac to send functions to LLM with
+       context needed for change (in batches or one at a time etc) or human can decide to do the change themselves.
+       Or ask llm to use regexp or some external tool etc.
+   - Mosiac can be composed of mosiacs also.
+   - Mosiac can be stateful, think selection a bunch in consult-ripgrep
+     and doing recursive editing on them one at a time.
+   - Mosiac can be persisted, resumed and branced of from any step.
+   - Even LLM interaction can be a mosiac, so arbitrarily complex projects/tasks and
+     their completion with LLM collaboration can be persisted like git log. This is one
+     of the missing pieces in current llm assisted coding. They do not preserve all the state.
+   - Mosiac was intended to provide a lever between human attention/generation
+     and LLM generation. So, user can arbitrarily refine mosiac and subsistute
+     llm generation with human input for any piece (integrates via recursive
+     editing). All of this will be tracked via mosiac itself.
+     gptel provides way to persist llm settings and state.
+     Mosiac provides combinators to send to llm in batches, all, sequentially, accumulation etc.
+   - Mosiac can track orthogonal aspects like cost for LLMs/failed attempts etc or time for human.
+
+* Practical Example (LLM-supported Refactoring)
+
+Imagine you need to add an argument to a function across a large codebase. mosiac might structure the workflow as:
+
+- Define the new argument (LLM-assisted new function definition)
+- Identify all function call-sites (leveraging existing Emacs tools like xref)
+- Use mosiac combinators to handle call-site edits via:
+  - Batch sending matches to the LLM for suggested edits
+  - Interactive user verification
+  - Iterative refinement and final application
+
+At each step, the workflow state is preserved, trackable, and editable. This greatly improves both human efficiency and LLM collaboration.
+
+* Inspiration and Background
+
+mosiac was inspired partly by the blog post [[https://karthinks.com/software/avy-can-do-anything/][Avy can do anything]] by karthink, who
+is also the author the excellent emacs package gptel.
