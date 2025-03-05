@@ -1,0 +1,314 @@
+* Modular Operation Sequences And Interactive Combinators (mosiac)
+
+mosiac is an Emacs package designed to streamline the creation and management of
+complex, multi-step editor interactions in a clear, declarative way. Just as
+=use-package= allows declarative setup for packages, mosiac allows users to
+describe sophisticated workflows involving multiple Emacs tools.
+
+* Key Features
+
+** Declarative Interactions and Grammar
+
+Mosiac is an Emacs package that lets users clearly define complex editor
+workflows in a declarative way. Instead of manually performing interactions
+(like searching for a buffer, opening a file, selecting text in steps), mosiac
+encourages describing these workflows explicitly using simple, composable
+pieces. Each workflow is made from modular building blocks: selection methods
+(e.g. avy, vertico), data sources (consult-line, ripgrep results), and final
+actions (editing commands, navigation, etc.). By keeping these building blocks
+independent and easy to combine, users can easily define, reuse, and maintain
+sophisticated workflows—similar to how packages like *use-package* simplify
+Emacs configurations.
+
+** LLM Integration and Addressing Common Issues
+
+The second key idea behind mosiac is integrating large language models (LLMs)
+into Emacs workflows in a structured, transparent way. Typically, LLMs suffer
+from problems like poor understanding of larger contexts, difficulty managing
+multiple constraints in longer outputs, and low interpretability ("why did it
+generate this particular code?")—making them unreliable for tasks requiring
+clarity and consistency (like software projects). Mosiac solves these issues by
+breaking down LLM-assisted tasks into small, clear steps— each step easily
+understandable, editable by a human, and trackable. This provides transparency,
+lets humans easily intervene where the LLM struggles, and makes it possible to
+gradually build complex solutions from understandable "chunks."
+
+** Synergy: Declarative Philosophy Enabling Effective LLM Usage (and vice versa)
+
+Declarative interaction definitions and structured LLM integration naturally
+reinforce each other in mosiac. By clearly describing workflows step-by-step, it
+becomes easier to use LLMs effectively—asking them for narrowly scoped tasks
+they can reliably handle, and using programmatic tools (like language servers)
+to handle more systematic tasks. At the same time, incorporating LLMs within
+these structured workflows allows even complex tasks (refactoring a large
+project, writing detailed specs, handling coding conventions) to become clearly
+defined mosaics of smaller tasks. Each small task remains understandable and
+manageable, creating a clear "paper trail" of how a complex solution evolved.
+The result is a powerful but understandable feedback loop: clarity and
+composability help humans confidently leverage LLMs, and structured LLM
+assistance makes even ambitious workflows easier to define clearly.
+
+* Why the name "mosiac"?
+
+The name "mosiac" refers to how large tasks can be broken down into many smaller
+pieces, similar to individual tiles in a mosaic artwork. Each tile is clearly
+defined and placed carefully to form a complete image, even though small gaps
+remain between individual tiles. This aligns with an LLM-based workflow: the
+language model operates on limited context and cannot see or understand the full
+system at once, which inherently creates "gaps" in understanding and requires
+human involvement to align and refine these pieces.
+
+Also, mosaics are recursive by nature— a mosaic itself can be made from smaller
+mosaics. In a similar way, a mosiac workflow can be built from smaller
+workflows, each doing something smaller but clear on its own. For example, a
+complex software development workflow like refactoring a big codebase can be
+built out of smaller workflows for changing single functions, renaming
+variables, or integrating parts of generated code. Each smaller task can itself
+be another mosiac workflow.
+
+In summary, the name "mosiac" reflects two important ideas: first, workflows
+involving an LLM will always have gaps in their understanding and thus will
+benefit from human guidance and adjustment; second, it highlights the recursive
+structure, where large tasks naturally break down into distinct smaller pieces,
+each clearly defined individually but combined to tackle bigger tasks
+progressively.
+
+
+
+
+*WIP*
+
+* Inspiration and Background
+
+mosiac was inspired partly by the blog post [[https://karthinks.com/software/avy-can-do-anything/][Avy can do anything]] by karthink, who
+is also the author the excellent emacs package gptel.
+* COMMENT Key Features
+
+** Declarative Complex Interactions
+
+   Complex workflows can be described clearly using the mosiac macro. For example:
+
+   - You start searching for a buffer (=consult-buffer=), don't find it, quickly
+     switch (=embark-become=) to file navigation, find the file interactively,
+     and then open it in another window.
+   - You're performing an incremental search (=isearch=) and narrow down
+     choices, then seamlessly switch to avy to finalize selections with a single
+     keypress.
+   - To select some region if cursor is already at one end, isearch (or
+     avy-jump), jump to the other end and finally C-x C-x to bring cursor back
+     to original position and activate the region between two points.
+     
+   mosiac makes interactions like these simple to define, manage, and reuse. It also
+   provides some uniformity and other conveniences.
+
+** Compositional & Orthogonal Grammar
+
+   mosiac is built around the principle of clean decoupling and combinators for
+   interactions. By breaking actions down into modular elements (eg: selectors like
+   avy or vertico, sources like consult-line, actions), it
+   allows powerful combinations while ensuring consistent interfaces. For example, a single
+   mosiac can have following and any of their combinations would work with same keybindings.
+
+   - Choose your selection method (avy, vertico).
+   - Choose the data source (consult-line, avy-goto-line).
+   - Perform uniform actions regardless of the choice above.
+
+   With these and interactive combinators, we can also create larger mosaics.
+
+** LLM Integration and Interactive Workflows
+
+   Mosiac is essentially a macro that encapsulates a sequence of operations,
+   which can be run, and various combinators for them. It is also intended to be
+   a building block for workign with LLMs on large projects.
+
+   It attempts to solve following problems with LLMs:
+   1. No understanding of llm built projects, hard to make changes/debug etc.
+
+   2. LLMs can make random illogical mistakes at times, and are worse at
+      generating larger chunks.
+
+      Mosiac solves this by recursively being composed of mosiacs itself, all
+      the way down. These are declarative, and prefer programattic tools themselves
+      to act on source (like lsp refactoring tools) and human additions/testing/
+      prompt iterations/context etc are all stored in mosiacs themselves.
+
+      So this sort provides a provenance/blueprint of how everything came together.
+      This also acts like a lever through which human can pay more attention to
+      complex parts etc. Since those mosiacs can have more work/guidelines being
+      done by human.
+      
+   3. LLMs are good at one focused task, and rapidly deteorate as more
+      constraints are put, even if those constraints are extremely simple like
+      following a style guide or having some useless data in context.
+
+      Humans can still gain efficiency improvement by having llm work on one
+      aspect at a time, and then integrate them (even using llm again), but
+      laziness at scale is a non-trivial problem. And just adding one line to
+      existing prompt is much easier than integrating multiple chats for a
+      separate goal using current tools.
+
+      Mosiac tries to take a different approach.
+
+      The goal is to create an interaction/operation grammar of sorts, where we
+      can have mosiacs for things like finding relevant context, stylize, poc,
+      use poc to solve a problem in style of a project. These mosiacs themselves are
+      written by LLMs.
+
+      There can also be mosiacs for writing spec, design etc. So, the hope is to
+      humands and LLMs use composition of these mosiacs (which we know to work well enough,
+      or can at least fix things manually and still not break mosiac structure )
+      to solve problems .
+
+*** Sketch points
+
+   2. One the basis of interaction Grammar, we can also expose these complex interactions as
+      functions to LLMs via tool use (with human in the loop configurability)
+   3. LLM writing elisp code( which can use tools like lsp like
+      eglot-rename, gofmt -r) etc or programmatic tools which are executed via
+      emacs, rather than llm
+   4. Compose =mosiac= operations into larger workflows, which is how mosaic is used building large projects.
+      Users create a mosiac with the help of llm and then execute it. Recursively. Attach mosiac.org as context 
+      to LLM.
+      For eg: First mosiac is a sequence of 4 steps for writing spec, design, implementation, testing with
+      inputs flowing through. This is mostly templatized, with interactive refinement leading to a spec or design
+      etc.
+      Inside each of these, one might keep breaking into further mosiacs and require various data as context or tool use etc.
+      Let's take an implementation example. Say we want to add an argument to a function in a large codebase whose and the
+      argument's value depends on the call site.
+      It can be done via following sequence
+      - llm writes a new function with added argument
+      - collect all the invocations via xref (exposed via another mosiac), and then
+        act on these, which can be another mosiac to send functions to LLM with
+        context needed for change (in batches or one at a time etc) or human can decide to do the change themselves.
+        Or ask llm to use regexp or some external tool etc.
+   5. Mosiac can be composed of mosiacs also.
+   6. Mosiac can be stateful, think selection a bunch in consult-ripgrep
+      and doing recursive editing on them one at a time.
+   7. Mosiac can be persisted, resumed and branced of from any step.
+   8. Even LLM interaction can be a mosiac, so arbitrarily complex projects/tasks and
+      their completion with LLM collaboration can be persisted like git log. This is one
+      of the missing pieces in current llm assisted coding. They do not preserve all the state.
+   9. Mosiac was intended to provide a lever between human attention/generation
+      and LLM generation. So, user can arbitrarily refine mosiac and subsistute
+      llm generation with human input for any piece (integrates via recursive
+      editing). All of this will be tracked via mosiac itself.
+      gptel provides way to persist llm settings and state.
+      Mosiac provides combinators to send to llm in batches, all, sequentially, accumulation etc.
+   10. Mosiac can track orthogonal aspects like cost for LLMs/failed attempts etc or time for human.
+
+* COMMENT Practical Example (LLM-supported Refactoring)
+
+Imagine you need to add an argument to a function across a large codebase. mosiac might structure the workflow as:
+
+- Define the new argument (LLM-assisted new function definition)
+- Identify all function call-sites (leveraging existing Emacs tools like xref)
+- Use mosiac combinators to handle call-site edits via:
+  - Batch sending matches to the LLM for suggested edits
+  - Interactive user verification
+  - Iterative refinement and final application
+
+At each step, the workflow state is preserved, trackable, and editable. This greatly improves both human efficiency and LLM collaboration.
+
+
+
+Mosiac introduces a declarative and composable grammar for defining complex
+sequences of interactions within Emacs. Similar to how tools like use-package
+streamline package configurations declaratively, mosiac lets users easily
+define, manage, and reuse sophisticated workflows spanning multiple commands or
+interactive components, such as selectors, sources, and actions. By decomposing
+interactions into modular and orthogonal elements, workflows can be flexibly
+combined and recomposed, enabling clearer articulation of user intent and easier
+workflow maintenance.
+
+The platform also deeply integrates large language models (LLMs), addressing
+common friction points in LLM-assisted software development, particularly those
+related to the opacity of LLM-generated artifacts, inconsistent reasoning in
+larger output sizes, and difficulties managing compounded constraints in single
+prompts. Mosiac achieves improved transparency and control by structuring LLM
+interaction into smaller declarative steps that preserve provenance and allow
+careful manual interleaving or refinement. This approach efficiently leverages
+LLM strengths in narrow, focused tasks, while using emacs-native tooling (like
+LSP refactorings and xref queries) to mitigate weaknesses and ensure consistent,
+understandable outcomes.
+
+Crucially, the synergy between mosiac's declarative composition grammar and its
+LLM integrations reinforce one another. The clearly articulated abstractions and
+modular decomposition provided by mosiac allow for both humans and LLMs to
+collaborate more effectively, each playing to their heightened strengths
+precisely where needed. Meanwhile, the systematic provenance and statefulness
+inherent to mosiac help maintain transparency and interpretability of LLM
+progression, enable iterative workflows, and preserve detailed history. This
+robust interaction grammar thus facilitates more advanced and reliable
+LLM-driven coding assistance by seamlessly interweaving human intuition, LLM
+capabilities, and Emacs' programmable ecosystem in a unified workflow.
+
+This uses too many fancy words and doesn't really get the complete idea across.
+"It takes more effort explain things simply"
+Can you try again with the goal of explaining the ESSENSE of the idea clearly
+in 3 paragraphs/sections. 
+
+*** 1. Declarative Interactions and Grammar
+
+Mosiac is an Emacs package that lets users clearly define complex editor
+workflows in a declarative way. Instead of manually performing interactions
+(like searching for a buffer, opening a file, selecting text in steps), mosiac
+encourages describing these workflows explicitly using simple, composable
+pieces. Each workflow is made from modular building blocks: selection methods
+(e.g. avy, vertico), data sources (consult-line, ripgrep results), and final
+actions (editing commands, navigation, etc.). By keeping these building blocks
+independent and easy to combine, users can easily define, reuse, and maintain
+sophisticated workflows—similar to how packages like *use-package* simplify
+Emacs configurations.
+
+*** 2. LLM Integration and Addressing Common Issues
+
+The second key idea behind mosiac is integrating large language models (LLMs)
+into Emacs workflows in a structured, transparent way. Typically, LLMs suffer
+from problems like poor understanding of larger contexts, difficulty managing
+multiple constraints in longer outputs, and low interpretability ("why did it
+generate this particular code?")—making them unreliable for tasks requiring
+clarity and consistency (like software projects). Mosiac solves these issues by
+breaking down LLM-assisted tasks into small, clear steps— each step easily
+understandable, editable by a human, and trackable. This provides transparency,
+lets humans easily intervene where the LLM struggles, and makes it possible to
+gradually build complex solutions from understandable "chunks."
+
+*** 3. Synergy: Declarative Philosophy Enabling Effective LLM Usage (and vice versa)
+
+Declarative interaction definitions and structured LLM integration naturally
+reinforce each other in mosiac. By clearly describing workflows step-by-step, it
+becomes easier to use LLMs effectively—asking them for narrowly scoped tasks
+they can reliably handle, and using programmatic tools (like language servers)
+to handle more systematic tasks. At the same time, incorporating LLMs within
+these structured workflows allows even complex tasks (refactoring a large
+project, writing detailed specs, handling coding conventions) to become clearly
+defined mosaics of smaller tasks. Each small task remains understandable and
+manageable, creating a clear "paper trail" of how a complex solution evolved.
+The result is a powerful but understandable feedback loop: clarity and
+composability help humans confidently leverage LLMs, and structured LLM
+assistance makes even ambitious workflows easier to define clearly.
+
+**4. Why the name "mosiac"?*
+
+The name "mosiac" refers to how large tasks can be broken down into many smaller
+pieces, similar to individual tiles in a mosaic artwork. Each tile is clearly
+defined and placed carefully to form a complete image, even though small gaps
+remain between individual tiles. This aligns with an LLM-based workflow: the
+language model operates on limited context and cannot see or understand the full
+system at once, which inherently creates "gaps" in understanding and requires
+human involvement to align and refine these pieces.
+
+Also, mosaics are recursive by nature— a mosaic itself can be made from smaller
+mosaics. In a similar way, a mosiac workflow can be built from smaller
+workflows, each doing something smaller but clear on its own. For example, a
+complex software development workflow like refactoring a big codebase can be
+built out of smaller workflows for changing single functions, renaming
+variables, or integrating parts of generated code. Each smaller task can itself
+be another mosiac workflow.
+
+In summary, the name "mosiac" reflects two important ideas: first, workflows
+involving an LLM will always have gaps in their understanding and thus will
+benefit from human guidance and adjustment; second, it highlights the recursive
+structure, where large tasks naturally break down into distinct smaller pieces,
+each clearly defined individually but combined to tackle bigger tasks
+progressively.
